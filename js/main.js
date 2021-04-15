@@ -1,11 +1,5 @@
 'use strict';
-window.onload = () => {
-  'use strict';
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
-  }
-};
 window.addEventListener('load', async () => {
   const ul = document.querySelector('ul');
   const rfrsh = document.querySelector('#refresh');
@@ -13,6 +7,30 @@ window.addEventListener('load', async () => {
   const username = 'Joonas';
   const greeting = form.elements.greeting;
   console.log('hello');
+
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('./sw.js');
+      const registration = await navigator.serviceWorker.ready;
+      if ('sync' in registration) {
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const message = {
+            username,
+            greeting: greeting.value,
+          };
+          try {
+            saveData('outbox', message);
+            await registration.sync.register('send-message');
+          } catch (error) {
+            console.error(error.message);
+          }
+        });
+      }
+    } catch (error) {
+      console.error(error.message);
+    }
+  }
 
   const init = async () => {
     const data = [];
